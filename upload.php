@@ -30,16 +30,42 @@ if (isset($_FILES['file'])) {
     $uniqueFileName = uniqid('file_', true) . '.' . strtolower($fileExt);
     $path = $targetDir . $uniqueFileName;
 
-    // Validasi sederhana
-    $allowedExt = ['jpg','png','pdf','doc','docx','zip','pptx'];
+    // Validasi ekstensi dan MIME type
+    $allowedExt = ['jpg','png','pdf','doc','docx','zip','pptx','mp4','avi','mkv','mov','wmv','flv','webm','m4v','3gp'];
     $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
     
+    // MIME type yang diperbolehkan
+    $allowedMimes = [
+        'image/jpeg', 'image/png', 'image/jpg',
+        'application/pdf',
+        'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/zip', 'application/x-zip-compressed',
+        'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'video/mp4', 'video/avi', 'video/x-msvideo', 'video/quicktime', 'video/x-ms-wmv',
+        'video/x-flv', 'video/webm', 'video/3gpp'
+    ];
+    
+    $fileMime = mime_content_type($tmpName);
+
+    
     if (!in_array(strtolower($fileExt), $allowedExt)) {
-        die("Ekstensi tidak diperbolehkan.");
+        die("❌ Ekstensi file tidak diperbolehkan.");
+    }
+    
+    if (!in_array($fileMime, $allowedMimes)) {
+        die("❌ Tipe file tidak diperbolehkan. MIME type: " . $fileMime);
     }
 
-    if ($fileSize > 5 * 1024 * 1024) { // 5MB
-        die("Ukuran file terlalu besar.");
+    if ($fileSize > 50 * 1024 * 1024) { // 50MB untuk video, 5MB untuk file lain
+        // Cek apakah file adalah video
+        $videoExts = ['mp4','avi','mkv','mov','wmv','flv','webm','m4v','3gp'];
+        $isVideo = in_array(strtolower($fileExt), $videoExts);
+        
+        if (!$isVideo && $fileSize > 5 * 1024 * 1024) {
+            die("❌ Ukuran file terlalu besar. Maksimal 5MB untuk dokumen/gambar.");
+        } elseif ($isVideo && $fileSize > 50 * 1024 * 1024) {
+            die("❌ Ukuran file video terlalu besar. Maksimal 50MB untuk video.");
+        }
     }
 
     if (move_uploaded_file($tmpName, $path)) {
