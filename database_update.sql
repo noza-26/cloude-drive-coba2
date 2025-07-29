@@ -1,35 +1,40 @@
--- SQL untuk membuat tabel users dan mengupdate tabel files
+-- Database untuk Drive Noza Cloud Storage
+-- Version: 1.0
+-- Author: Drive Noza Team
 
--- Buat tabel users
+-- Buat database
+CREATE DATABASE IF NOT EXISTS cloud_drive;
+USE cloud_drive;
+
+-- Tabel users untuk autentikasi
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_username (username)
 );
 
--- Cek apakah kolom user_id sudah ada sebelum menambahkan
-SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
-                   WHERE TABLE_SCHEMA = DATABASE() 
-                   AND TABLE_NAME = 'files' 
-                   AND COLUMN_NAME = 'user_id');
+-- Tabel files untuk manajemen file
+CREATE TABLE IF NOT EXISTS files (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    path VARCHAR(255) NOT NULL,
+    size INT NOT NULL,
+    user_id INT NOT NULL,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_user_id (user_id),
+    INDEX idx_uploaded_at (uploaded_at),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
 
--- Tambah kolom user_id ke tabel files (jika belum ada)
-SET @sql = IF(@col_exists = 0, 'ALTER TABLE files ADD COLUMN user_id INT', 'SELECT "Column user_id already exists"');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
+-- Insert user default untuk testing (opsional)
+-- Password: admin123 (sudah di-hash dengan bcrypt)
+INSERT INTO users (username, password) VALUES 
+('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi')
+ON DUPLICATE KEY UPDATE username = username;
 
--- Tambah foreign key constraint (jika belum ada)
--- Hapus constraint lama jika ada
-SET @fk_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS 
-                  WHERE TABLE_SCHEMA = DATABASE() 
-                  AND TABLE_NAME = 'files' 
-                  AND CONSTRAINT_NAME = 'fk_files_user');
-
-SET @sql = IF(@fk_exists = 0, 
-              'ALTER TABLE files ADD CONSTRAINT fk_files_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE', 
-              'SELECT "Foreign key already exists"');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
+-- Tampilkan informasi setup
+SELECT 'Database cloud_drive berhasil dibuat!' as status;
+SELECT 'Tabel users dan files berhasil dibuat!' as status;
+SELECT 'User default: admin / admin123' as info;
