@@ -66,6 +66,29 @@ $user_id = $_SESSION['user_id'];
             border-radius: 25px;
         }
         
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .change-password-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            font-size: 14px;
+        }
+        
+        .change-password-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
         .logout-btn {
             background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
             color: white;
@@ -131,6 +154,19 @@ $user_id = $_SESSION['user_id'];
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .file-info {
+            margin-top: 8px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .file-info small {
+            color: #666;
+            line-height: 1.4;
         }
         
         .upload-btn {
@@ -276,6 +312,18 @@ $user_id = $_SESSION['user_id'];
                 gap: 15px;
                 text-align: center;
             }
+            
+            .header-actions {
+                flex-direction: column;
+                gap: 10px;
+                width: 100%;
+            }
+            
+            .change-password-btn,
+            .logout-btn {
+                width: 100%;
+                text-align: center;
+            }
         }
     </style>
 
@@ -284,12 +332,15 @@ $user_id = $_SESSION['user_id'];
     <div class="container">
         <div class="header">
             <div class="user-info">
-                <h1>🌤️ Drive N</h1>
+                <h1>🌤️ Drive Noza</h1>
                 <div class="user-welcome">
                     👋 Selamat datang, <strong><?= htmlspecialchars($username) ?></strong>
                 </div>
             </div>
-            <a href="logout.php" class="logout-btn">Logout</a>
+            <div class="header-actions">
+                <a href="change_password.php" class="change-password-btn">🔒 Ubah Password</a>
+                <a href="logout.php" class="logout-btn">Logout</a>
+            </div>
         </div>
         
         <div class="main-content">
@@ -300,6 +351,10 @@ $user_id = $_SESSION['user_id'];
                     <div class="form-group">
                         <label for="file">📁 Pilih File:</label>
                         <input type="file" name="file" id="file" required />
+                        <div class="file-info">
+                            <small>📋 Format yang didukung: JPG, PNG, PDF, DOC, DOCX, ZIP, PPTX, MP4, AVI, MKV, MOV, WMV, FLV, WEBM, M4V, 3GP</small><br>
+                            <small>📏 Maksimal: 5MB (dokumen/gambar), 50MB (video)</small>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="display_name">✏️ Nama File untuk Ditampilkan:</label>
@@ -316,15 +371,37 @@ $user_id = $_SESSION['user_id'];
                 <div class="files-grid">
                     <?php
                     // Query files berdasarkan user yang login
-                    $result = $conn->query("SELECT * FROM files WHERE user_id = $user_id ORDER BY uploaded_at DESC");
-                    
+                    $stmt = $conn->prepare("SELECT * FROM files WHERE user_id = ? ORDER BY uploaded_at DESC");
+                    $stmt->bind_param("i", $user_id);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+
                     if ($result->num_rows > 0):
                         while ($row = $result->fetch_assoc()):
                     ?>
                     <div class="file-card">
                         <div class="file-info">
                             <div class="file-name">
-                                📄 <?= htmlspecialchars($row['name']) ?>
+                                <?php
+                                // Tentukan icon berdasarkan ekstensi file
+                                $fileExt = strtolower(pathinfo($row['name'], PATHINFO_EXTENSION));
+                                $videoExts = ['mp4','avi','mkv','mov','wmv','flv','webm','m4v','3gp'];
+                                $imageExts = ['jpg','jpeg','png','gif','bmp'];
+                                $docExts = ['pdf','doc','docx','ppt','pptx'];
+                                
+                                if (in_array($fileExt, $videoExts)) {
+                                    echo "🎬 ";
+                                } elseif (in_array($fileExt, $imageExts)) {
+                                    echo "🖼️ ";
+                                } elseif (in_array($fileExt, $docExts)) {
+                                    echo "📄 ";
+                                } elseif ($fileExt === 'zip') {
+                                    echo "📦 ";
+                                } else {
+                                    echo "📄 ";
+                                }
+                                ?>
+                                <?= htmlspecialchars($row['name']) ?>
                             </div>
                             <div class="file-size">
                                 <?= round($row['size']/1024, 2) ?> KB
@@ -336,7 +413,7 @@ $user_id = $_SESSION['user_id'];
                             </div>
                         </div>
                         <div class="file-actions">
-                            <a href="uploads/<?= basename($row['path']) ?>" download class="btn btn-download">
+                            <a href="download.php?id=<?= $row['id'] ?>" class="btn btn-download">
                                 ⬇️ Download
                             </a>
                             <a href="delete.php?id=<?= $row['id'] ?>" 
