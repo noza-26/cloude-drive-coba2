@@ -105,7 +105,7 @@ if (isset($_POST['register'])) {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login - Cloud Noza</title>
+    <title>Login - drive Noza</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -245,7 +245,7 @@ if (isset($_POST['register'])) {
 <body>
     <div class="container">
         <div class="logo">
-            <h1>🌤️ Cloud Noza</h1>
+            <h1>🌤️ Drive Noza</h1>
         </div>
         
         <div class="tabs">
@@ -256,9 +256,6 @@ if (isset($_POST['register'])) {
         <?php if ($error): ?>
             <div class="error">
                 <?= htmlspecialchars($error) ?>
-                <?php if (strpos($error, 'database') !== false || strpos($error, 'Database') !== false): ?>
-                    <br><br><a href="setup.php" style="color: #c62828; text-decoration: underline;">Klik di sini untuk setup database</a>
-                <?php endif; ?>
             </div>
         <?php endif; ?>
         
@@ -303,10 +300,6 @@ if (isset($_POST['register'])) {
                 
                 <button type="submit" name="register">Register</button>
             </form>
-        </div>
-        
-        <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #666;">
-            Jika mengalami masalah database, <a href="setup.php" style="color: #00FA9A;">jalankan setup database</a>
         </div>
     </div>
     
